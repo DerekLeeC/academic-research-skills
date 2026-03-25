@@ -468,6 +468,85 @@ phases: {
 
 ---
 
+## Schema 10: Economics Methodology Brief (economics-research -> deep-research / academic-paper)
+
+**Producer**: `economics-research/*` (any agent in the economics-research skill)
+**Consumer**: `deep-research/research_architect_agent` | `deep-research/bibliography_agent` | `academic-paper/structure_architect_agent` | `academic-paper/draft_writer_agent`
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `research_question` | string | Precise causal or descriptive question |
+| `identification_strategy` | object | `{method: string, assumptions: list[{name: string, testable: boolean, test: string}], threats: list[{name: string, severity: enum, mitigation: string}], notation: string}` |
+| `data_strategy` | object | `{datasets: list[{name: string, access: string, variables: list[string]}], sample: string, period: string, unit_of_observation: string}` |
+| `estimation_plan` | object | `{estimator: string, standard_errors: string, inference_notes: string, software: string}` |
+| `robustness_plan` | list[object] | Each: `{test_name: string, purpose: string, specification: string}` |
+| `code_skeleton` | object | `{stata: string, r: string, python: string}` — implementation starter code for primary specification |
+| `literature_positioning` | string | How this study contributes to existing literature |
+
+### Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `structural_model` | object | `{primitives: string, equilibrium: string, estimation_method: string}` (if structural track) |
+| `experimental_design` | object | `{treatment_arms: list[string], randomization: string, power_analysis: string, pre_analysis_plan: string}` (if experimental track) |
+| `macro_model` | object | `{model_class: string, frictions: list[string], solution_method: string, calibration_targets: list[string]}` (if macro track) |
+| `welfare_analysis` | object | `{framework: string, sufficient_statistics: list[string], distributional: string}` (if policy evaluation) |
+| `subfield` | string | Economics subfield classification |
+| `jel_codes` | list[string] | JEL classification codes |
+
+### Example
+
+```markdown
+## Economics Methodology Brief
+
+**Research Question**: What is the causal effect of state-level minimum wage increases on teen employment in the US?
+
+**Identification Strategy**:
+- Method: Staggered DID (Callaway & Sant'Anna 2021)
+- Assumptions:
+  1. Parallel trends — Testable: Yes — Test: Event study pre-treatment coefficients
+  2. No anticipation — Testable: Partially — Test: Check for pre-trends 1-2 quarters before
+  3. SUTVA — Testable: No — Argument: Limited cross-border labor mobility for teens
+- Threats:
+  1. Differential pre-trends — Severity: High — Mitigation: Event study + F-test
+  2. Endogenous timing — Severity: Medium — Mitigation: Control for state GDP growth
+  3. Staggered DID bias — Severity: Medium — Mitigation: Use Callaway-Sant'Anna
+- Notation: Y_st = α_s + δ_t + Σ_k β_k·D_{s,t-k} + X_st'γ + ε_st
+
+**Data Strategy**:
+- Datasets:
+  1. CPS-MORG via IPUMS — Access: Public — Variables: employment, age, state, wage
+  2. State MW database — Access: Public — Variables: effective MW, date of change
+- Sample: 50 states + DC, quarterly
+- Period: 2000Q1-2023Q4
+- Unit: State-quarter
+
+**Estimation Plan**:
+- Estimator: Callaway & Sant'Anna group-time ATT
+- Standard errors: State-level clustering + wild cluster bootstrap
+- Inference: Report both asymptotic and bootstrap 95% CIs
+- Software: Stata (csdid) / R (did)
+
+**Robustness Plan**:
+1. Event study pre-trends — Purpose: Test parallel trends — Spec: Pre-treatment coefficients
+2. Bacon decomposition — Purpose: Diagnose staggered bias — Spec: bacondecomp
+3. Placebo outcome — Purpose: Falsification — Spec: Prime-age (25-54) employment
+4. Oster bounds — Purpose: Selection on unobservables — Spec: δ with R²_max = 1.3·R̃²
+
+**Code Skeleton (Stata)**:
+```stata
+csdid teen_emprate controls, ivar(state) time(yq) gvar(first_mw_increase) method(dripw)
+```
+
+**Literature Positioning**: Contributes to the Card-Krueger vs. Neumark-Wascher debate using modern staggered DID estimators robust to heterogeneous treatment effects.
+
+**JEL Codes**: J23, J38, J21
+```
+
+---
+
 ## Validation Rules
 
 1. **Required field check**: All schema fields marked without "(optional)" or "No" in the Required column are REQUIRED. Consumer agents MUST verify all required fields are present before proceeding
